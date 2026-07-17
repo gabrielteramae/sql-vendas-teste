@@ -1,7 +1,6 @@
 # Relatório de Vendas — Desafio de SQL
 
 ![SQL](https://img.shields.io/badge/SQL-SQLite%20%7C%20PostgreSQL-4479A1?logo=postgresql&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-blue)
 
 Desafio autoral de SQL aplicado a um cenário de e-commerce: dado um schema com clientes, produtos, pedidos e itens de pedido, escrever queries que respondam perguntas reais de negócio (receita, ranking, ticket médio, segundo maior pedido por cliente, receita acumulada e receita por categoria em uma janela de tempo).
 
