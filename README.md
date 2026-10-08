@@ -1,61 +1,42 @@
-# Relatório de Vendas — Desafio de SQL
+# SQL Vendas — relatórios sobre dados de exemplo
 
-![SQL](https://img.shields.io/badge/SQL-SQLite%20%7C%20PostgreSQL-4479A1?logo=postgresql&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 
-Desafio autoral de SQL aplicado a um cenário de e-commerce: dado um schema com clientes, produtos, pedidos e itens de pedido, escrever queries que respondam perguntas reais de negócio (receita, ranking, ticket médio, segundo maior pedido por cliente, receita acumulada e receita por categoria em uma janela de tempo).
+Quatro tabelas de um e-commerce fictício e sete consultas: receita por cliente, top 5 produtos por quantidade, clientes sem pedido, ticket médio por mês, segundo maior pedido por cliente, receita acumulada por dia e categoria de maior receita nos 90 dias anteriores à data máxima da base. O preço usado é `order_items.unit_price`, não o preço atual de `products`. Os `INSERT` de exemplo têm dois itens com preço diferente do cadastro. Não há dado real de venda.
 
-## Schema
+## Stack
+
+- SQL de SQLite em `schema.sql` e `solution.sql`
+- `strftime('%Y-%m', ...)` e `date(max_date, '-90 days')` são do SQLite
+- `ROW_NUMBER` e `SUM() OVER` são window functions; o dialeto de data é que não viaja sozinho
+
+## Estrutura
 
 ```
-customers(id, name, email, signup_date)
-products(id, name, category, price)
-orders(id, customer_id, order_date)
-order_items(id, order_id, product_id, quantity, unit_price)
+.
+├── PROBLEM.md      # enunciado das sete perguntas
+├── schema.sql      # tabelas e INSERT de exemplo
+└── solution.sql    # as sete consultas, comentadas
 ```
 
-`order_items.unit_price` guarda o preço no momento da compra, já que preços de produtos mudam com o tempo — os dados de exemplo incluem casos assim de propósito.
-
-## Requisitos resolvidos
-
-1. Receita total por cliente
-2. Top 5 produtos mais vendidos por quantidade
-3. Clientes que nunca fizeram pedido (`LEFT JOIN` + `IS NULL`)
-4. Ticket médio por mês
-5. Segundo maior pedido de cada cliente, usando `ROW_NUMBER() OVER (PARTITION BY ...)`
-6. Receita acumulada (running total) por dia, usando `SUM() OVER (ORDER BY ...)`
-7. Categoria com maior receita nos últimos 90 dias a partir da data mais recente na base
+Tabelas: `customers` (id, name, email, signup_date), `products` (id, name, category, price), `orders` (id, customer_id, order_date), `order_items` (id, order_id, product_id, quantity, unit_price). Cinco clientes, sete produtos, nove pedidos, doze itens. Elaine Rocha (id 5) não tem pedido.
 
 ## Como rodar
 
 ```bash
+git clone https://github.com/gabrielteramae/sql-vendas-teste.git
+cd sql-vendas-teste
 sqlite3 vendas.db < schema.sql
 sqlite3 vendas.db < solution.sql
 ```
 
-Ou via Python, sem precisar instalar o CLI do SQLite:
+`schema.sql` faz `CREATE TABLE` sem `IF NOT EXISTS`. Rodar de novo no mesmo `vendas.db` falha. Apague o arquivo ou use outro nome. As consultas não dependem uma da outra: cada bloco em `solution.sql` executa sozinho.
 
-```python
-import sqlite3
+Em PostgreSQL, `strftime('%Y-%m', order_date)` vira `TO_CHAR(order_date, 'YYYY-MM')` e `date(max_date, '-90 days')` vira `max_date - INTERVAL '90 days'`. Em MySQL, `DATE_FORMAT(order_date, '%Y-%m')` e `DATE_SUB(max_date, INTERVAL 90 DAY)`.
 
-conn = sqlite3.connect("vendas.db")
-cur = conn.cursor()
-cur.executescript(open("schema.sql").read())
-cur.executescript(open("solution.sql").read())
-```
+## Testes realizados
 
-Todas as queries foram testadas com os dados de exemplo e os resultados conferidos manualmente (ex: receita da Carla Souza = R$ 3.190,00, verificado somando os 3 pedidos dela linha por linha).
-
-## Portabilidade
-
-As queries usam `strftime()` e `date()`, específicas do SQLite. Pra rodar em PostgreSQL, troca por:
-- `strftime('%Y-%m', order_date)` → `TO_CHAR(order_date, 'YYYY-MM')`
-- `date(max_date, '-90 days')` → `max_date - INTERVAL '90 days'`
-
-Em MySQL:
-- `strftime('%Y-%m', order_date)` → `DATE_FORMAT(order_date, '%Y-%m')`
-- `date(max_date, '-90 days')` → `DATE_SUB(max_date, INTERVAL 90 DAY)`
-
-As window functions (`ROW_NUMBER`, `SUM() OVER`) são padrão ANSI SQL e funcionam sem alterações no PostgreSQL e MySQL 8+.
+Não há suíte automatizada. A conferência é manual, em cima dos `INSERT` de `schema.sql`.
 
 ---
 
